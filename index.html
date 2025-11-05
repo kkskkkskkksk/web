@@ -149,7 +149,7 @@
         
         <!-- 关系选择 -->
         <div>
-          <label class="block text-gray-700 mb-3 text-sm">你与发送者的关系是</label>
+          <label class="block text-gray-700 mb-3 text-sm">选择关系或消息类型</label>
           <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
             <label class="relation-option flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-purple-300">
               <input type="radio" name="relation" value="general" class="mr-2 text-purple-500" checked>
@@ -167,7 +167,10 @@
               <input type="radio" name="relation" value="friend" class="mr-2 text-purple-500">
               <span>朋友</span>
             </label>
-            
+            <label class="relation-option flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-purple-300 col-span-2 sm:col-span-1">
+              <input type="radio" name="relation" value="encourage" class="mr-2 text-purple-500">
+              <span>鼓励</span>
+            </label>
           </div>
         </div>
         
@@ -223,6 +226,20 @@
     
     // 装饰字符
     const decorations = ["♥", "♡", "✿", "❀", "✨", "☆", "✺", "❤", "♬", "☀", "☺", "♪"];
+    
+    // 所有可用颜色（从所有关系的颜色中汇总，用于随机选择）
+    const allColors = [
+      // general系列
+      "bg-general-1", "bg-general-2", "bg-general-3",
+      // family系列
+      "bg-family-1", "bg-family-2", "bg-family-3",
+      // lover系列
+      "bg-lover-1", "bg-lover-2", "bg-lover-3",
+      // friend系列
+      "bg-friend-1", "bg-friend-2", "bg-friend-3",
+      // encourage系列
+      "bg-encourage-1", "bg-encourage-2", "bg-encourage-3"
+    ];
     
     // 全局变量
     const container = document.getElementById('popup-container');
@@ -285,14 +302,14 @@
       setTimeout(startPopups, 100);
     }
     
-    // 创建弹窗（严格使用用户选择的关系）
+    // 创建弹窗（消息内容匹配关系，颜色随机选择所有可用颜色）
     function createPopup() {
       if (!isRunning) return;
       
       const popup = document.createElement('div');
       popup.classList.add('popup', 'popup-shadow', 'select-none');
       
-      // 固定使用用户选择的关系（不再随机）
+      // 固定使用用户选择的关系（消息内容匹配）
       const category = userRelation;
       
       // 从所选关系的消息列表中随机选择
@@ -344,13 +361,12 @@
       popup.style.width = `${width}px`;
       popup.style.height = `${height}px`;
       
-      // 选择对应关系的随机颜色
-      const colorIndex = Math.floor(Math.random() * 3) + 1;
-      const bgColorClass = `bg-${category}-${colorIndex}`;
+      // 关键修改：从所有颜色中随机选择（不再绑定关系）
+      const randomColor = allColors[Math.floor(Math.random() * allColors.length)];
       
       // 设置内容
       popup.innerHTML = `
-        <div class="popup-content ${bgColorClass} w-full h-full flex flex-col items-center justify-center p-3 relative ${animations.join(' ')}">
+        <div class="popup-content ${randomColor} w-full h-full flex flex-col items-center justify-center p-3 relative ${animations.join(' ')}">
           <span class="text-center text-sm md:text-base">${decoratedMessage}</span>
           <button class="close-btn absolute top-1 right-1 text-gray-700 hover:text-gray-900 p-1">
             <i class="fa fa-times"></i>
