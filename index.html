@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>消息弹窗</title>
+  <!-- 引入Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 引入Font Awesome -->
+  <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+  
+  <!-- 配置Tailwind -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            general: {
+              1: '#FFB6C1', // 浅粉色
+              2: '#E6E6FA', // 淡紫色
+              3: '#FFDAB9'  // 桃色
+            },
+            family: {
+              1: '#98FB98', // 淡绿色
+              2: '#90EE90', // 浅绿色
+              3: '#7FFFD4'  // 碧绿色
+            },
+            lover: {
+              1: '#FFC0CB', // 粉色
+              2: '#FFB6C1', // 浅粉色
+              3: '#FF69B4'  // 热粉色
+            },
+            friend: {
+              1: '#87CEFA', // 浅蓝色
+              2: '#ADD8E6', // 淡蓝色
+              3: '#B0E0E6'  // 亮蓝色
+            },
+            encourage: {
+              1: '#FFD700', // 金色
+              2: '#FFFF00', // 黄色
+              3: '#FFA07A'  // 浅橙色
+            }
+          },
+          fontFamily: {
+            sans: ['SimHei', 'system-ui', 'sans-serif'],
+          },
+        },
+      }
+    }
+  </script>
+  
+  <style type="text/tailwindcss">
+    @layer utilities {
+      .popup-shadow {
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+      .pulse-animation {
+        animation: pulse 3s infinite ease-in-out;
+      }
+      .float-animation {
+        animation: float 6s infinite ease-in-out;
+      }
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+  </style>
+  
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      overflow-x: hidden;
+      background-color: #f9f9f9;
+    }
+    
+    .popup {
+      position: absolute;
+      opacity: 0;
+      transition: opacity 0.3s ease-out;
+      pointer-events: all;
+      z-index: 10;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    
+    .popup.show {
+      opacity: 1;
+    }
+    
+    .popup-content {
+      transition: all 0.3s ease;
+    }
+    
+    .close-btn {
+      transition: all 0.2s ease;
+    }
+    
+    .close-btn:hover {
+      transform: scale(1.1);
+    }
+
+    /* 名字和关系输入框样式 */
+    .input-container {
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    
+    .input-container.hidden {
+      opacity: 0;
+      transform: scale(0.8);
+      pointer-events: none;
+    }
+    
+    /* 关系选择项样式 */
+    .relation-option {
+      transition: all 0.2s ease;
+    }
+    
+    .relation-option:hover {
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+
+<body>
+  <!-- 名字和关系输入框 -->
+  <div id="input-container" class="input-container fixed inset-0 flex items-center justify-center bg-black/30 backdrop-blur-sm z-100">
+    <div class="bg-white rounded-xl p-8 w-11/12 max-w-md shadow-2xl">
+      <h2 class="text-2xl font-bold text-center mb-6 text-gray-800">请输入信息</h2>
+      
+      <div class="flex flex-col gap-6">
+        <!-- 名字输入 -->
+        <div>
+          <label for="name-input" class="block text-gray-700 mb-2 text-sm">你的名字</label>
+          <input 
+            type="text" 
+            id="name-input" 
+            placeholder="例如：小明" 
+            class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-purple-500 transition-all"
+          >
+        </div>
+        
+        <!-- 关系选择 -->
+        <div>
+          <label class="block text-gray-700 mb-3 text-sm">你与发送者的关系是</label>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <label class="relation-option flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-purple-300">
+              <input type="radio" name="relation" value="general" class="mr-2 text-purple-500" checked>
+              <span>通用</span>
+            </label>
+            <label class="relation-option flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-purple-300">
+              <input type="radio" name="relation" value="family" class="mr-2 text-purple-500">
+              <span>家人</span>
+            </label>
+            <label class="relation-option flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-purple-300">
+              <input type="radio" name="relation" value="lover" class="mr-2 text-purple-500">
+              <span>恋人</span>
+            </label>
+            <label class="relation-option flex items-center p-3 border border-gray-200 rounded-lg cursor-pointer hover:border-purple-300">
+              <input type="radio" name="relation" value="friend" class="mr-2 text-purple-500">
+              <span>朋友</span>
+            </label>
+            
+          </div>
+        </div>
+        
+        <!-- 开始按钮 -->
+        <button 
+          id="start-btn" 
+          class="bg-purple-500 hover:bg-purple-600 text-white py-3 rounded-lg font-medium transition-colors"
+        >
+          开始接收消息
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- 弹窗容器 -->
+  <div id="popup-container" class="fixed inset-0 pointer-events-none z-50"></div>
+
+  <script>
+    // 消息分类和内容（严格对应关系）
+    const messages = {
+      "general": [ // 通用
+        "梦想成真", "保持好心情", "早点休息", "每天都要元气满满", 
+        "多喝水哦~", "金榜题名", "今天过得开心", "记得吃水果", 
+        "别熬夜", "天凉了，多穿衣服", "愿所有烦恼都消失", 
+        "好好爱自己", "顺顺利利", "期待下一次见面", "想你了", 
+        "注意休息", "照顾好自己"
+      ],
+      "family": [ // 家人
+        "爸妈永远爱你", "家里一切都好", "记得常回家看看", 
+        "家是永远的港湾", "家人永远支持你", "妈妈做了你爱吃的菜", 
+        "家人想念你", "记得打电话给爸妈", "一家人最重要的是健康", 
+        "家人的爱是最温暖的"
+      ],
+      "lover": [ // 恋人
+        "你是我最大的幸福", "想你的每一天", "你的笑容真美", 
+        "永远爱你", "你是我生命中的阳光", "今天也很想你", 
+        "和你在一起的时光最珍贵", "你今天辛苦了", "你是我的全世界", 
+        "做个甜甜的梦"
+      ],
+      "friend": [ // 朋友
+        "有空一起喝一杯", "谢谢你一直的陪伴", "朋友一生一起走", 
+        "真高兴认识你", "友谊长存", "你的朋友永远支持你", 
+        "朋友间无需客气", "你是值得骄傲的人", "为你加油", 
+        "你永远不是一个人"
+      ],
+      "encourage": [ // 鼓励
+        "相信自己，你可以的！", "今天的付出，明天会有收获", 
+        "坚持就是胜利", "你比想象中更强大", "困难只是暂时的", 
+        "不要放弃，继续努力", "勇敢面对挑战", "每一步都是进步", 
+        "你的努力不会白费", "成功就在前方等着你"
+      ]
+    };
+    
+    // 装饰字符
+    const decorations = ["♥", "♡", "✿", "❀", "✨", "☆", "✺", "❤", "♬", "☀", "☺", "♪"];
+    
+    // 全局变量
+    const container = document.getElementById('popup-container');
+    const inputContainer = document.getElementById('input-container');
+    const nameInput = document.getElementById('name-input');
+    const startBtn = document.getElementById('start-btn');
+    let userName = ''; // 用户名
+    let userRelation = ''; // 用户选择的关系
+    let popups = [];
+    let isRunning = true;
+    let animationFrameId = null;
+    
+    // 获取屏幕尺寸
+    const screenWidth = window.innerWidth;
+    const screenHeight = window.innerHeight;
+    
+    // 初始化输入事件
+    function initInput() {
+      // 点击开始按钮
+      startBtn.addEventListener('click', handleStart);
+      // 回车提交
+      nameInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') handleStart();
+      });
+    }
+    
+    // 处理开始逻辑（验证输入和关系选择）
+    function handleStart() {
+      const inputName = nameInput.value.trim();
+      // 获取选中的关系
+      const selectedRelation = document.querySelector('input[name="relation"]:checked')?.value;
+      
+      // 验证：名字和关系都不能为空
+      let isValid = true;
+      if (!inputName) {
+        nameInput.classList.add('border-red-500');
+        isValid = false;
+      } else {
+        nameInput.classList.remove('border-red-500');
+      }
+      
+      if (!selectedRelation) {
+        // 高亮关系选择区域（如果未选择）
+        document.querySelectorAll('.relation-option').forEach(option => {
+          option.classList.add('border-red-300');
+          setTimeout(() => option.classList.remove('border-red-300'), 1000);
+        });
+        isValid = false;
+      }
+      
+      if (!isValid) return;
+      
+      // 存储用户输入
+      userName = inputName;
+      userRelation = selectedRelation;
+      
+      // 隐藏输入框
+      inputContainer.classList.add('hidden');
+      // 延迟100ms后开始弹窗（等待动画完成）
+      setTimeout(startPopups, 100);
+    }
+    
+    // 创建弹窗（严格使用用户选择的关系）
+    function createPopup() {
+      if (!isRunning) return;
+      
+      const popup = document.createElement('div');
+      popup.classList.add('popup', 'popup-shadow', 'select-none');
+      
+      // 固定使用用户选择的关系（不再随机）
+      const category = userRelation;
+      
+      // 从所选关系的消息列表中随机选择
+      const messageList = messages[category];
+      const baseMessage = messageList[Math.floor(Math.random() * messageList.length)];
+      const userMessage = `${userName}，${baseMessage}`; // 加入用户名
+      
+      // 随机添加装饰
+      let decoratedMessage = userMessage;
+      if (Math.random() > 0.5) {
+        const prefix = decorations[Math.floor(Math.random() * decorations.length)];
+        const suffix = decorations[Math.floor(Math.random() * decorations.length)];
+        decoratedMessage = `${prefix} ${userMessage} ${suffix}`;
+      }
+      
+      // 随机尺寸
+      const width = Math.floor(Math.random() * 80) + 120; // 120-200px
+      const height = Math.floor(Math.random() * 40) + 45;  // 45-85px
+      
+      // 随机动画
+      const animations = [];
+      if (Math.random() > 0.5) animations.push('pulse-animation');
+      if (Math.random() > 0.5) animations.push('float-animation');
+      
+      // 随机位置
+      let x = Math.floor(Math.random() * (screenWidth - width));
+      let y = Math.floor(Math.random() * (screenHeight - height));
+      
+      // 20%概率出现在边缘
+      if (Math.random() < 0.2) {
+        const edge = ['top', 'bottom', 'left', 'right'][Math.floor(Math.random() * 4)];
+        if (edge === 'top') y = -20;
+        else if (edge === 'bottom') y = screenHeight - height + 20;
+        else if (edge === 'left') x = -20;
+        else if (edge === 'right') x = screenWidth - width + 20;
+      }
+      
+      // 10%概率出现在中心区域
+      if (Math.random() < 0.1) {
+        const centerWidth = screenWidth / 3;
+        const centerHeight = screenHeight / 3;
+        x = (screenWidth / 2 - centerWidth / 2) + Math.floor(Math.random() * centerWidth);
+        y = (screenHeight / 2 - centerHeight / 2) + Math.floor(Math.random() * centerHeight);
+      }
+      
+      // 设置位置
+      popup.style.left = `${x}px`;
+      popup.style.top = `${y}px`;
+      popup.style.width = `${width}px`;
+      popup.style.height = `${height}px`;
+      
+      // 选择对应关系的随机颜色
+      const colorIndex = Math.floor(Math.random() * 3) + 1;
+      const bgColorClass = `bg-${category}-${colorIndex}`;
+      
+      // 设置内容
+      popup.innerHTML = `
+        <div class="popup-content ${bgColorClass} w-full h-full flex flex-col items-center justify-center p-3 relative ${animations.join(' ')}">
+          <span class="text-center text-sm md:text-base">${decoratedMessage}</span>
+          <button class="close-btn absolute top-1 right-1 text-gray-700 hover:text-gray-900 p-1">
+            <i class="fa fa-times"></i>
+          </button>
+        </div>
+      `;
+      
+      // 添加到容器
+      container.appendChild(popup);
+      
+      // 存储弹窗引用
+      popups.push(popup);
+      
+      // 触发淡入动画
+      setTimeout(() => {
+        if (popup.parentNode) {
+          popup.classList.add('show');
+        }
+      }, 50);
+      
+      // 点击事件 - 关闭所有弹窗
+      popup.addEventListener('click', closeAllPopups);
+      
+      // 限制最大弹窗数量为1000
+      if (popups.length > 1000) {
+        const oldestPopup = popups.shift();
+        if (oldestPopup.parentNode) {
+          oldestPopup.classList.remove('show');
+          setTimeout(() => {
+            if (oldestPopup.parentNode) {
+              container.removeChild(oldestPopup);
+            }
+          }, 300);
+        }
+      }
+    }
+    
+    // 关闭所有弹窗
+    function closeAllPopups() {
+      isRunning = false;
+      
+      // 清除动画帧
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+      
+      // 关闭所有弹窗
+      popups.forEach(popup => {
+        popup.classList.remove('show');
+        setTimeout(() => {
+          if (popup.parentNode) {
+            container.removeChild(popup);
+          }
+        }, 300);
+      });
+      
+      popups = [];
+      
+      // 显示重新开始提示
+      const restartPrompt = document.createElement('div');
+      restartPrompt.className = 'fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white p-6 rounded-lg shadow-xl z-100 text-center';
+      restartPrompt.innerHTML = `
+        <h3 class="text-xl font-bold mb-4">所有消息已关闭</h3>
+        <button id="restart-btn" class="bg-purple-500 hover:bg-purple-600 text-white px-6 py-2 rounded-full transition-colors">
+          重新开始
+        </button>
+      `;
+      document.body.appendChild(restartPrompt);
+      
+      // 重新开始按钮事件
+      document.getElementById('restart-btn').addEventListener('click', () => {
+        document.body.removeChild(restartPrompt);
+        // 重新显示输入框（重置表单）
+        inputContainer.classList.remove('hidden');
+        nameInput.value = ''; // 清空名字
+        document.querySelector('input[name="relation"][value="general"]').checked = true; // 重置关系为通用
+        nameInput.focus(); // 聚焦输入框
+      });
+    }
+    
+    // 连续创建弹窗
+    function continuousPopupCreation() {
+      if (!isRunning) return;
+      
+      createPopup();
+      
+      // 每100ms创建一个新弹窗
+      animationFrameId = setTimeout(continuousPopupCreation, 100);
+    }
+    
+    // 初始创建一批弹窗
+    function createInitialPopups(count = 0) {
+      if (!isRunning || count >= 100) {
+        // 初始弹窗创建完成后开始连续创建
+        continuousPopupCreation();
+        return;
+      }
+      
+      createPopup();
+      // 每50ms创建一个初始弹窗
+      setTimeout(() => createInitialPopups(count + 1), 50);
+    }
+    
+    // 开始弹窗流程
+    function startPopups() {
+      isRunning = true;
+      popups = [];
+      // 清除残留弹窗
+      while (container.firstChild) {
+        container.removeChild(container.firstChild);
+      }
+      createInitialPopups();
+    }
+    
+    // 键盘事件 - ESC键关闭所有弹窗
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeAllPopups();
+      }
+    });
+    
+    // 窗口加载完成后初始化
+    window.addEventListener('load', () => {
+      initInput();
+      nameInput.focus(); // 自动聚焦名字输入框
+    });
+  </script>
+</body>
+</html>
